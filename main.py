@@ -1,3 +1,7 @@
+import telebot
+from telebot import types
+import config
+
 #   This is main
 '''
 Класс Task:
@@ -65,9 +69,9 @@ def reader():
     allTasks = tasks.display_task(tasks)
     return(allTasks)
 
-def newTask():
+def newTask(task):
     tasks = Tasks
-    task = input("Input your task:\n")
+    #task = input("Input your task:\n")
     Tasks.create_task(tasks, task)
 
 def updateTask(taskList):
@@ -76,9 +80,8 @@ def updateTask(taskList):
     newText = input("What will we do with the drunken sailor?\n")
     Tasks.update_task(tasks, taskList, toChange, newText)
 
-def delTask(taskList):
+def delTask(taskList, toDel):
     tasks = Tasks
-    toDel = int(input("What task to remove?\n"))
     Tasks.delete_task(tasks, taskList, toDel)
 
 def resetTaskList():
@@ -107,7 +110,63 @@ def navigation():
     print("Ready")
 
 
-navigation()
+#navigation()
+
+
+bot = telebot.TeleBot(config.BOT)
+
+print("running")
+
+#   Код для ТГ
+@bot.message_handler(commands=['start'])
+def welcome(message):
+    markup = types.ReplyKeyboardMarkup(resize_keyboard=True)
+    task_all = types.KeyboardButton('All tasks️')
+    #task_upd = types.KeyboardButton('Update task')
+    task_del = types.KeyboardButton('Delete tasks️')
+    #devs = types.KeyboardButton('For dev')
+
+    markup.add(task_all, task_del)
+
+    bot.send_message(message.chat.id, "Welcome to Task Master V_1.0.0\n"
+                                      "What do you want now?", reply_markup=markup)
+
+to_del = 0
+
+@bot.message_handler(content_types=['text'])
+def get_link(message):
+    global to_del
+
+
+    if message.chat.type == 'private':
+
+        if message.text == 'All tasks️':
+            task_list = reader()
+            task_count = str(len(task_list) - 1)
+            del task_list[0]
+            all_tsk = '\n'.join(f'{i + 1}. {item}' for i, item in enumerate(task_list))
+            bot.send_message(message.chat.id, "You have " + task_count + ' tasks\n')
+            bot.send_message(message.chat.id, all_tsk)
+
+        elif message.text == 'Delete tasks️':
+            to_del = 1
+            bot.send_message(message.chat.id, 'What do you want to delete?')
+
+        elif message.text == 'For dev':
+            bot.send_message(message.chat.id, message.text)
+
+        elif to_del == 1:
+            delTask(reader(), int(message.text))
+            to_del = 0
+            bot.send_message(message.chat.id, "Deleted")
+
+        else:
+            newTask(message.text)
+            bot.send_message(message.chat.id, "Ready")
+
+
+bot.polling(none_stop=True)
+
 
 '''
 Класс Idea:
