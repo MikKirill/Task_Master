@@ -1,3 +1,13 @@
+import pymysql
+import telebot
+from telebot import types
+import config
+
+host = config.HOST
+user = config.USER
+password = config.PASSWORD
+database_name = config.DATABASE_NAME
+
 #   This is main
 '''
 Класс Task:
@@ -23,14 +33,27 @@ class Tasks:
         self.dateEnd = False
 
     def create_task(self, task):  #   Запись в БД
+        # Установка соединения с базой данных
+        connection = pymysql.connect(host=host, user=user, password=password, database=database_name)
 
-        with open("bd.txt", "r") as file:
-            lines = file.read()
+        cursor = connection.cursor()
 
-        allText = lines + '\n' + task
+        title = task
+        sql = "INSERT INTO tasks (title) VALUES (%s)"
 
-        with open("bd.txt", "w") as file:
-            file.write(allText)
+        cursor.execute(sql, (title))
+
+        connection.commit()
+
+
+#        with open("bd.txt", "r") as file:
+#            lines = file.read()
+
+#        allText = lines + '\n' + task
+
+#        with open("bd.txt", "w") as file:
+#            file.write(allText)
+
 
     def update_task(self, taskList, taskId, taskTitle):  #   Изменение записи
         taskList[taskId] = taskTitle
@@ -52,11 +75,26 @@ class Tasks:
         print("complete method")
 
     def display_task(self):#    Отображение записи
-        with open("bd.txt", "r") as file:
-            lines = file.readlines()
-            print(lines)
-            print(lines[0][:-1], len(lines) - 1, 'tasks')
-            return(lines)
+
+        # Установка соединения с базой данных
+        connection = pymysql.connect(host=host, user=user, password=password, database=database_name)
+
+        cursor = connection.cursor()
+
+        # Выполните SQL-запрос для получения всех данных из таблицы
+        query = "SELECT * FROM tasks;"
+        cursor.execute(query)
+
+        # Получите все строки данных из результата запроса
+        rows = list(cursor.fetchall())
+
+        return rows
+
+#        with open("bd.txt", "r") as file:
+#            lines = file.readlines()
+#            print(lines)
+#            print(lines[0][:-1], len(lines) - 1, 'tasks')
+#            return(lines)
 
 #task1 = Task(1, "test", "1st test")
 
@@ -65,9 +103,9 @@ def reader():
     allTasks = tasks.display_task(tasks)
     return(allTasks)
 
-def newTask():
+def newTask(task):
     tasks = Tasks
-    task = input("Input your task:\n")
+    #task = input("Input your task:\n")
     Tasks.create_task(tasks, task)
 
 def updateTask(taskList):
@@ -76,14 +114,29 @@ def updateTask(taskList):
     newText = input("What will we do with the drunken sailor?\n")
     Tasks.update_task(tasks, taskList, toChange, newText)
 
-def delTask(taskList):
+def delTask(taskList, toDel):
     tasks = Tasks
-    toDel = int(input("What task to remove?\n"))
     Tasks.delete_task(tasks, taskList, toDel)
 
 def resetTaskList():
     with open("bd.txt", "w") as file:
         file.write("You have ")
+
+def testBD():
+    # Установка соединения с базой данных
+    connection = pymysql.connect(host=host, user=user, password=password, database=database_name)
+
+    cursor = connection.cursor()
+
+    # Выполните SQL-запрос для получения всех данных из таблицы
+    query = "SELECT * FROM tasks;"
+    cursor.execute(query)
+
+    # Получите все строки данных из результата запроса
+    rows = list(cursor.fetchall())
+
+    return rows
+
 
 def navigation():
     allTasks = reader()
@@ -107,7 +160,85 @@ def navigation():
     print("Ready")
 
 
-navigation()
+#navigation()
+
+
+bot = telebot.TeleBot(config.BOT)
+
+print("running")
+
+#   Код для ТГ
+@bot.message_handler(commands=['start'])
+def welcome(message):
+    markup = types.ReplyKeyboardMarkup(resize_keyboard=True)
+    task_all = types.KeyboardButton('All tasks️')
+    #task_upd = types.KeyboardButton('Update task')
+    task_del = types.KeyboardButton('Delete tasks️')
+    devs = types.KeyboardButton('For dev')
+
+    markup.add(task_all, task_del, devs)
+
+    bot.send_message(message.chat.id, "Welcome to Task Master V_1.1.2\n"
+                                      "What do you want now?", reply_markup=markup)
+
+to_del = 0
+
+@bot.message_handler(content_types=['text'])
+def get_link(message):
+    global to_del
+
+
+    if message.chat.type == 'private':
+
+        if message.text == 'All tasks️':
+            task_list = reader()
+            task_count = str(len(task_list) - 1)
+            del task_list[0]
+            all_tsk1 = []
+            for i in task_list:
+                all_tsk1.append(i[0])
+            all_tsk = '\n'.join(f'{i + 1}. {item}' for i, item in enumerate(all_tsk1))
+            bot.send_message(message.chat.id, "You have " + task_count + ' tasks\n')
+            bot.send_message(message.chat.id, all_tsk)
+
+        elif message.text == 'Delete tasks️':
+            to_del = 1
+            bot.send_message(message.chat.id, 'What do you want to delete?')
+
+        elif message.text == 'For dev':
+            bot.send_message(message.chat.id, message.text)
+            task_list = testBD()
+            task_count = str(len(task_list) - 1)
+            del task_list[0]
+            all_tsk1 = []
+            for i in task_list:
+                all_tsk1.append(i[0])
+            all_tsk = '\n'.join(f'{i + 1}. {item}' for i, item in enumerate(all_tsk1))
+            bot.send_message(message.chat.id, "You have " + task_count + ' tasks\n')
+            bot.send_message(message.chat.id, all_tsk)
+
+            '''
+            if tt == 1:
+                bot.send_message(message.chat.id, "Good 4 U")
+            elif tt:
+                bot.send_message(message.chat.id, "So sad")
+            else:
+                bot.send_message(message.chat.id, "Somethng wrong")
+            '''
+
+
+        elif to_del == 1:
+            delTask(reader(), int(message.text))
+            to_del = 0
+            bot.send_message(message.chat.id, "Deleted")
+
+        else:
+            newTask(message.text)
+            bot.send_message(message.chat.id, "Ready")
+
+
+bot.polling(none_stop=True)
+
 
 '''
 Класс Idea:
