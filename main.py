@@ -35,7 +35,6 @@ class Tasks:
     def create_task(self, task):  #   Запись в БД
         # Установка соединения с базой данных
         connection = pymysql.connect(host=host, user=user, password=password, database=database_name)
-
         cursor = connection.cursor()
 
         title = task
@@ -114,13 +113,33 @@ def updateTask(taskList):
     newText = input("What will we do with the drunken sailor?\n")
     Tasks.update_task(tasks, taskList, toChange, newText)
 
-def delTask(taskList, toDel):
-    tasks = Tasks
-    Tasks.delete_task(tasks, taskList, toDel)
+def delTask(toDel):
+    task_count, all_tsk = read_norm()
+    tsk_del = all_tsk[toDel - 1]
+
+    connection = pymysql.connect(host=host, user=user, password=password, database=database_name)
+    cursor = connection.cursor()
+
+    sql = "DELETE FROM tasks WHERE title = %s"
+
+    cursor.execute(sql, (tsk_del,))
+    connection.commit()
+    cursor.close()
+    connection.close()
 
 def resetTaskList():
     with open("bd.txt", "w") as file:
         file.write("You have ")
+
+def read_norm():
+    task_list = reader()
+    task_count = str(len(task_list) - 1)
+
+    del task_list[0]
+    all_tsk1 = []
+    for i in task_list:
+        all_tsk1.append(i[0])
+    return task_count, all_tsk1
 
 def testBD():
     # Установка соединения с базой данных
@@ -174,11 +193,11 @@ def welcome(message):
     task_all = types.KeyboardButton('All tasks️')
     #task_upd = types.KeyboardButton('Update task')
     task_del = types.KeyboardButton('Delete tasks️')
-    devs = types.KeyboardButton('For dev')
+    #devs = types.KeyboardButton('For dev')
 
-    markup.add(task_all, task_del, devs)
+    markup.add(task_all, task_del)
 
-    bot.send_message(message.chat.id, "Welcome to Task Master V_1.1.2\n"
+    bot.send_message(message.chat.id, "Welcome to Task Master V_1.1.3\n"
                                       "What do you want now?", reply_markup=markup)
 
 to_del = 0
@@ -191,13 +210,10 @@ def get_link(message):
     if message.chat.type == 'private':
 
         if message.text == 'All tasks️':
-            task_list = reader()
-            task_count = str(len(task_list) - 1)
-            del task_list[0]
-            all_tsk1 = []
-            for i in task_list:
-                all_tsk1.append(i[0])
+
+            task_count, all_tsk1 = read_norm()
             all_tsk = '\n'.join(f'{i + 1}. {item}' for i, item in enumerate(all_tsk1))
+
             bot.send_message(message.chat.id, "You have " + task_count + ' tasks\n')
             bot.send_message(message.chat.id, all_tsk)
 
@@ -207,16 +223,21 @@ def get_link(message):
 
         elif message.text == 'For dev':
             bot.send_message(message.chat.id, message.text)
-            task_list = testBD()
-            task_count = str(len(task_list) - 1)
-            del task_list[0]
-            all_tsk1 = []
-            for i in task_list:
-                all_tsk1.append(i[0])
-            all_tsk = '\n'.join(f'{i + 1}. {item}' for i, item in enumerate(all_tsk1))
-            bot.send_message(message.chat.id, "You have " + task_count + ' tasks\n')
-            bot.send_message(message.chat.id, all_tsk)
 
+            to_dd = 2
+
+            task_count, all_tsk = read_norm()
+            tsk_del = all_tsk[to_dd-1]
+
+            connection = pymysql.connect(host=host, user=user, password=password, database=database_name)
+            cursor = connection.cursor()
+
+            sql = "DELETE FROM tasks WHERE title = %s"
+
+            cursor.execute(sql, (tsk_del,))
+            connection.commit()
+            cursor.close()
+            connection.close()
             '''
             if tt == 1:
                 bot.send_message(message.chat.id, "Good 4 U")
@@ -228,7 +249,7 @@ def get_link(message):
 
 
         elif to_del == 1:
-            delTask(reader(), int(message.text))
+            delTask(int(message.text))
             to_del = 0
             bot.send_message(message.chat.id, "Deleted")
 
