@@ -57,16 +57,11 @@ class Tasks:
 
     #   Изменение задачи (soon)
     def update_task(self, task_list, task_id, task_title):
-        task_list[task_id] = task_title
-
-        toBd = '\n'.join([item.rstrip() for item in task_list])
-
-        with open("bd.txt", "w") as file:
-            file.write(toBd)
+        pass
 
     #   Выполнение задачи (soon)
     def complete_task(self):
-        print("complete method")
+        pass
 
 
 
