@@ -1,69 +1,12 @@
-import pymysql
 import telebot
 from telebot import types
 import config
+from entities import Tasks
 
 bot = telebot.TeleBot(config.BOT)
-host = config.HOST
-user = config.USER
-password = config.PASSWORD
-database_name = config.DATABASE_NAME
 
-class Tasks:
-    def __init__(self, id, title, description):
-        self.taskId = id
-        self.taskTitle = title
-        self.dsc = description
-        self.dateEnd = False
-
-    #    Отображение всех задач
-    def display_task(self):
-        # Установка соединения с базой данных
-        connection = pymysql.connect(host=host, user=user, password=password, database=database_name)
-        cursor = connection.cursor()
-
-        # Выполните SQL-запрос для получения всех данных из таблицы
-        query = "SELECT * FROM tasks;"
-        cursor.execute(query)
-
-        # Получите все строки данных из результата запроса
-        rows = list(cursor.fetchall())
-        return rows
-
-    def create_task(self, task):  #   Запись в БД
-        # Установка соединения с базой данных
-        connection = pymysql.connect(host=host, user=user, password=password, database=database_name)
-        cursor = connection.cursor()
-
-        sql = "INSERT INTO tasks (title) VALUES (%s)"
-
-        cursor.execute(sql, (task))
-        connection.commit()
-        return
-
-    #   Удаление задачи
-    def delete_task(self, tsk_del):
-        # Установка соединения с базой данных
-        connection = pymysql.connect(host=host, user=user, password=password, database=database_name)
-        cursor = connection.cursor()
-
-        sql = "DELETE FROM tasks WHERE title = %s"
-
-        cursor.execute(sql, (tsk_del,))
-        connection.commit()
-        cursor.close()
-        connection.close()
-        return
-
-    #   Изменение задачи (soon)
-    def update_task(self, task_list, task_id, task_title):
-        pass
-
-    #   Выполнение задачи (soon)
-    def complete_task(self):
-        pass
-
-
+def add_newUser():
+    pass
 
 #   Все задачи
 def reader():
@@ -86,9 +29,7 @@ def delTask(toDel):
 #   Изменение задачи (soon)
 def updateTask(taskList):
     tasks = Tasks
-    toChange = int(input("What task to change?\n"))
-    newText = input("What will we do with the drunken sailor?\n")
-    Tasks.update_task(tasks, taskList, toChange, newText)
+    pass
 
 #   Нормализация полученных данных из бд (требует доработки)
 def read_norm():
@@ -108,34 +49,40 @@ def read_norm():
 def testBD():
     pass
 
+
+
 print("running")
 
 #   Код для ТГ
 @bot.message_handler(commands=['start'])
 def welcome(message):
+    add_newUser()
+
     markup = types.ReplyKeyboardMarkup(resize_keyboard=True)
     task_all = types.KeyboardButton('All tasks️')
     #task_upd = types.KeyboardButton('Update task')
     task_del = types.KeyboardButton('Delete tasks️')
+    info = types.KeyboardButton('Info')
     #devs = types.KeyboardButton('For dev')
 
-    markup.add(task_all, task_del)
+    markup.add(task_all, task_del, info)
 
-    bot.send_message(message.chat.id, "Welcome to Task Master V_1.1.5\n"
+    bot.send_message(message.chat.id, "Welcome to Task Master\n"
                                       "What do you want now?", reply_markup=markup)
 
 to_del = 0
 
 @bot.message_handler(content_types=['text'])
 def get_link(message):
-    global to_del
 
+    global to_del
 
     if message.chat.type == 'private':
 
         if message.text == 'All tasks️':
 
             task_count, all_tsk1 = read_norm()
+
             all_tsk = '\n'.join(f'{i + 1}. {item}' for i, item in enumerate(all_tsk1))
 
             bot.send_message(message.chat.id, "You have " + task_count + ' tasks\n')
@@ -144,6 +91,9 @@ def get_link(message):
         elif message.text == 'Delete tasks️':
             to_del = 1
             bot.send_message(message.chat.id, 'What do you want to delete?')
+
+        elif message.text == 'Info':
+            bot.send_message(message.chat.id, 'Task Master\nV_1.1.6')
 
         elif message.text == 'For dev':
             bot.send_message(message.chat.id, message.text)
