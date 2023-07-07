@@ -14,13 +14,15 @@ class Tasks:
         self.dateEnd = False
 
     #    Отображение всех задач
-    def display_task(self):
+    def display_task(self, user_id):
         # Установка соединения с базой данных
         connection = pymysql.connect(host=host, user=user, password=password, database=database_name)
         cursor = connection.cursor()
 
+        table_name = 'taskList_' + str(user_id) + '_0_0'
+
         # Выполните SQL-запрос для получения всех данных из таблицы
-        query = "SELECT * FROM tasks;"
+        query = "SELECT task_title FROM " + table_name + ";"
         cursor.execute(query)
 
         # Получите все строки данных из результата запроса
@@ -28,24 +30,28 @@ class Tasks:
         return rows
 
     #   Создание новой задачи
-    def create_task(self, task):  #   Запись в БД
+    def create_task(self, task, user_id):  #   Запись в БД
+        table_name = 'taskList_' + str(user_id) + '_0_0'
+
         # Установка соединения с базой данных
         connection = pymysql.connect(host=host, user=user, password=password, database=database_name)
         cursor = connection.cursor()
 
-        sql = "INSERT INTO tasks (title) VALUES (%s)"
+        sql = "INSERT INTO " + table_name + " (task_title) VALUES (%s)"
 
         cursor.execute(sql, (task))
         connection.commit()
         return
 
     #   Удаление задачи
-    def delete_task(self, tsk_del):
+    def delete_task(self, tsk_del, user_id):
+        table_name = 'taskList_' + str(user_id) + '_0_0'
+
         # Установка соединения с базой данных
         connection = pymysql.connect(host=host, user=user, password=password, database=database_name)
         cursor = connection.cursor()
 
-        sql = "DELETE FROM tasks WHERE title = %s"
+        sql = "DELETE FROM " + table_name + " WHERE task_title = %s"
 
         cursor.execute(sql, (tsk_del,))
         connection.commit()
