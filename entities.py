@@ -22,12 +22,19 @@ class Tasks:
         table_name = 'taskList_' + str(user_id) + '_0_0'
 
         # Выполните SQL-запрос для получения всех данных из таблицы
-        query = "SELECT task_title FROM " + table_name + ";"
-        cursor.execute(query)
-
+        bd_tasks = "SELECT task_title FROM " + table_name + ";"
+        cursor.execute(bd_tasks)
         # Получите все строки данных из результата запроса
-        rows = list(cursor.fetchall())
-        return rows
+        rows_task = list(cursor.fetchall())
+
+        # Выполните SQL-запрос для получения всех данных из таблицы
+        bd_id = "SELECT task_id FROM " + table_name + ";"
+        cursor.execute(bd_id)
+        # Получите все строки данных из результата запроса
+        rows_id = list(cursor.fetchall())
+        connection.commit()
+
+        return rows_task, rows_id
 
     #   Создание новой задачи
     def create_task(self, task, user_id):  #   Запись в БД
@@ -51,7 +58,7 @@ class Tasks:
         connection = pymysql.connect(host=host, user=user, password=password, database=database_name)
         cursor = connection.cursor()
 
-        sql = "DELETE FROM " + table_name + " WHERE task_title = %s"
+        sql = "DELETE FROM " + table_name + " WHERE task_id = %s"
 
         cursor.execute(sql, (tsk_del,))
         connection.commit()

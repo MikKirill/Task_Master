@@ -93,13 +93,9 @@ def check_usr(usr_id, usr_name):
 
     if result[0] > 0:
         # User существует
-        print("User существует")
         return 1
     else:
         # User не существует
-        print('New user')
         new_user(usr_id, usr_name)
-        print('User added')
         new_table(usr_id, 1)
-        print('DB created')
         return 0
