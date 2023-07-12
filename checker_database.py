@@ -17,8 +17,9 @@ def initial():
     # Создаем таблицу "Users"
     users_table = """
         CREATE TABLE IF NOT EXISTS Users (
-            user_id INT PRIMARY KEY AUTO_INCREMENT,
-            username VARCHAR(255)
+            user_id INT PRIMARY KEY,
+            username VARCHAR(255),
+            user_flag INT DEFAULT 0        
         )
     """
 
@@ -34,6 +35,12 @@ def initial():
 
     cursor.execute(users_table)
     cursor.execute(taskList_table)
+
+    #   Обнуление незакрытого пользовательского запроса
+    update_query = "UPDATE Users SET user_flag = 0"
+    cursor.execute(update_query)
+    connection.commit()
+
     # Закрываем соединение с базой данных
     connection.close()
     return
@@ -99,3 +106,24 @@ def check_usr(usr_id, usr_name):
         new_user(usr_id, usr_name)
         new_table(usr_id, 1)
         return 0
+
+def update_flag(user_id, flag):
+    connection = pymysql.connect(host=host, user=user, password=password, database=database_name)
+    cursor = connection.cursor()
+
+    set_flag = "UPDATE users SET user_flag = %s WHERE user_id = %s"
+    cursor.execute(set_flag, (flag, user_id))
+    connection.commit()
+    connection.close()
+    pass
+
+def check_flag(user_id):
+    connection = pymysql.connect(host=host, user=user, password=password, database=database_name)
+    cursor = connection.cursor()
+
+    sql_flag = "SELECT user_flag FROM users WHERE user_id = %s"
+    cursor.execute(sql_flag, (user_id,))
+    result = cursor.fetchone()
+
+    connection.close()
+    return int(result[0])

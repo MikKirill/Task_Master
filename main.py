@@ -8,8 +8,6 @@ import checker_database as cdb
 bot = telebot.TeleBot(config.BOT)
 dev_id = config.DEV_ID
 
-to_del = 0
-
 print('Initialization DB')
 cdb.initial()
 print('Success')
@@ -58,6 +56,13 @@ def read_norm(id):
 def testBD():
     pass
 
+def change_flag(user_id, new_flag):
+    cdb.update_flag(user_id, new_flag)
+    pass
+
+def user_flag(user_id):
+    return cdb.check_flag(user_id)
+
 
 
 print("running")
@@ -99,7 +104,7 @@ def get_link(message):
     if message.chat.type == 'private':
 
         if message.text == 'Delete tasks️':
-            to_del = 1
+            change_flag(message.chat.id, 1)
             bot.send_message(message.chat.id, 'What do you want to delete?')
 
         elif message.text == 'Info':
@@ -111,9 +116,9 @@ def get_link(message):
         elif message.text == 'For dev':
             bot.send_message(message.chat.id, message.text)
 
-        elif to_del == 1:
+        elif user_flag(message.chat.id) == 1:
             delTask(int(message.text), message.chat.id)
-            to_del = 0
+            change_flag(message.chat.id, 0)
 
             task_count, all_tsk1, all_id = read_norm(message.chat.id)
             all_tsk = '\n'.join(f'{i + 1}. {item}' for i, item in enumerate(all_tsk1))
